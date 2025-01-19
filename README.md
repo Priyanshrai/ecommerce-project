@@ -28,7 +28,8 @@ A full-stack application for managing orders built with Node.js, React, and Post
 ### Database Setup
 
 1. Create a PostgreSQL database named `ecommerce`
-2. Run the SQL commands from `database/schema.sql` to create tables and insert initial data
+2. Navigate to the backend directory and rename `.env.example.local` to `.env`, then add your database credentials
+3. Run `node setup-db.js` to create the required tables in your PostgreSQL database
 
 ### Backend Setup
 
@@ -78,8 +79,8 @@ The application will be available at `http://localhost:3000`
 
 ## API Endpoints
 
-- GET `/api/order` - Get all orders
-- GET `/api/order/:id` - Get order by ID
+- GET `/api/orders` - Get all orders
+- GET `/api/orders/:id` - Get order by ID
 - POST `/api/orders` - Create new order
 - PUT `/api/orders/:id` - Update order
 - DELETE `/api/orders/:id` - Delete order
@@ -88,4 +89,4 @@ The application will be available at `http://localhost:3000`
 
 - The frontend is configured to connect to the backend at `http://localhost:5000`
 - Make sure both the backend server and PostgreSQL database are running before starting the frontend
-- The initial product data is loaded automatically when running the database schema 
+- Initial product data is loaded automatically during database setup
