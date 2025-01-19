@@ -40,7 +40,7 @@ fontLink.rel = 'stylesheet';
 document.head.appendChild(fontLink);
 
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? `${window.location.origin}/api`
+  ? '/api'
   : 'http://localhost:5000/api';
 
 // Custom styles
