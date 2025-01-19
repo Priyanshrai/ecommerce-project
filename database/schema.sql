@@ -1,17 +1,22 @@
--- Create tables
-CREATE TABLE IF NOT EXISTS orders (
+-- Drop tables if they exist (in correct order)
+DROP TABLE IF EXISTS "OrderProductMap";
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS products;
+
+-- Create tables in correct order
+CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
     orderDescription VARCHAR(100) NOT NULL,
     createdAt TIMESTAMP NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS products (
+CREATE TABLE products (
     id INT PRIMARY KEY,
     productName VARCHAR(100) NOT NULL,
     productDescription TEXT
 );
 
-CREATE TABLE IF NOT EXISTS "OrderProductMap" (
+CREATE TABLE "OrderProductMap" (
     id SERIAL PRIMARY KEY,
     orderId INT NOT NULL,
     productId INT NOT NULL,

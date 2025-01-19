@@ -24,18 +24,22 @@ const pool = new Pool({
 // Get all orders
 app.get('/api/order', async (req, res) => {
   try {
+    console.log('Attempting to fetch orders...');
     const ordersQuery = `
-      SELECT o.id, o.orderDescription, o."createdAt",
-             COUNT(DISTINCT opm.productId) as "countOfProducts"
+      SELECT o.id, o.orderdescription, o.createdat,
+             COUNT(DISTINCT opm.productid) as countofproducts
       FROM orders o
-      LEFT JOIN "OrderProductMap" opm ON o.id = opm."orderId"
-      GROUP BY o.id, o.orderDescription, o."createdAt"
+      LEFT JOIN "OrderProductMap" opm ON o.id = opm.orderid
+      GROUP BY o.id, o.orderdescription, o.createdat
       ORDER BY o.id DESC
     `;
+    console.log('Executing query:', ordersQuery);
     const { rows } = await pool.query(ordersQuery);
+    console.log('Query result:', rows);
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Database error:', err);
+    res.status(500).json({ error: err.message, details: err.stack });
   }
 });
 
@@ -46,14 +50,14 @@ app.get('/api/order/:id', async (req, res) => {
     const orderQuery = `
       SELECT o.*, array_agg(json_build_object(
         'id', p.id,
-        'productName', p."productName",
-        'productDescription', p."productDescription"
+        'productname', p.productname,
+        'productdescription', p.productdescription
       )) as products
       FROM orders o
-      LEFT JOIN "OrderProductMap" opm ON o.id = opm."orderId"
-      LEFT JOIN products p ON opm."productId" = p.id
+      LEFT JOIN "OrderProductMap" opm ON o.id = opm.orderid
+      LEFT JOIN products p ON opm.productid = p.id
       WHERE o.id = $1
-      GROUP BY o.id
+      GROUP BY o.id, o.orderdescription, o.createdat
     `;
     const { rows } = await pool.query(orderQuery, [id]);
     if (rows.length === 0) {
@@ -61,7 +65,8 @@ app.get('/api/order/:id', async (req, res) => {
     }
     res.json(rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Database error:', err);
+    res.status(500).json({ error: err.message, details: err.stack });
   }
 });
 
@@ -74,7 +79,7 @@ app.post('/api/orders', async (req, res) => {
     
     // Insert order
     const orderResult = await client.query(
-      'INSERT INTO orders (orderDescription, "createdAt") VALUES ($1, NOW()) RETURNING *',
+      'INSERT INTO orders (orderdescription, createdat) VALUES ($1, NOW()) RETURNING *',
       [orderDescription]
     );
     const newOrder = orderResult.rows[0];
@@ -85,7 +90,7 @@ app.post('/api/orders', async (req, res) => {
         `(${newOrder.id}, ${productId})`
       ).join(',');
       await client.query(`
-        INSERT INTO "OrderProductMap" ("orderId", "productId")
+        INSERT INTO "OrderProductMap" (orderid, productid)
         VALUES ${mappingValues}
       `);
     }
@@ -94,7 +99,8 @@ app.post('/api/orders', async (req, res) => {
     res.status(201).json(newOrder);
   } catch (err) {
     await client.query('ROLLBACK');
-    res.status(500).json({ error: err.message });
+    console.error('Database error:', err);
+    res.status(500).json({ error: err.message, details: err.stack });
   } finally {
     client.release();
   }
@@ -110,7 +116,7 @@ app.put('/api/orders/:id', async (req, res) => {
 
     // Update order
     const updateResult = await client.query(
-      'UPDATE orders SET orderDescription = $1 WHERE id = $2 RETURNING *',
+      'UPDATE orders SET orderdescription = $1 WHERE id = $2 RETURNING *',
       [orderDescription, id]
     );
 
@@ -120,14 +126,14 @@ app.put('/api/orders/:id', async (req, res) => {
     }
 
     // Update product mappings
-    await client.query('DELETE FROM "OrderProductMap" WHERE "orderId" = $1', [id]);
+    await client.query('DELETE FROM "OrderProductMap" WHERE orderid = $1', [id]);
     
     if (productIds && productIds.length > 0) {
       const mappingValues = productIds.map(productId => 
         `(${id}, ${productId})`
       ).join(',');
       await client.query(`
-        INSERT INTO "OrderProductMap" ("orderId", "productId")
+        INSERT INTO "OrderProductMap" (orderid, productid)
         VALUES ${mappingValues}
       `);
     }
@@ -136,7 +142,8 @@ app.put('/api/orders/:id', async (req, res) => {
     res.json(updateResult.rows[0]);
   } catch (err) {
     await client.query('ROLLBACK');
-    res.status(500).json({ error: err.message });
+    console.error('Database error:', err);
+    res.status(500).json({ error: err.message, details: err.stack });
   } finally {
     client.release();
   }
@@ -150,7 +157,7 @@ app.delete('/api/orders/:id', async (req, res) => {
     const { id } = req.params;
 
     // Delete order-product mappings first
-    await client.query('DELETE FROM "OrderProductMap" WHERE "orderId" = $1', [id]);
+    await client.query('DELETE FROM "OrderProductMap" WHERE orderid = $1', [id]);
     
     // Delete order
     const result = await client.query('DELETE FROM orders WHERE id = $1 RETURNING *', [id]);
@@ -164,7 +171,8 @@ app.delete('/api/orders/:id', async (req, res) => {
     res.json({ message: 'Order deleted successfully' });
   } catch (err) {
     await client.query('ROLLBACK');
-    res.status(500).json({ error: err.message });
+    console.error('Database error:', err);
+    res.status(500).json({ error: err.message, details: err.stack });
   } finally {
     client.release();
   }
