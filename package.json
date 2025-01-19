@@ -6,6 +6,9 @@
     "build": "cd frontend && npm install && npm run build",
     "vercel-build": "cd backend && npm install"
   },
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "dependencies": {},
   "devDependencies": {}
 } 
