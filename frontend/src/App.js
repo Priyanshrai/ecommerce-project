@@ -39,9 +39,10 @@ fontLink.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;6
 fontLink.rel = 'stylesheet';
 document.head.appendChild(fontLink);
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '/api'
-  : 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 
+  (process.env.NODE_ENV === 'production' 
+    ? 'https://ecommerce-backend-one-ashy.vercel.app/api'
+    : 'http://localhost:5000/api');
 
 // Custom styles
 const styles = {

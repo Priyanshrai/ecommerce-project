@@ -1,12 +1,14 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
+const password = encodeURIComponent('2-qj4B#32QTAYji');
+const connectionString = `postgresql://postgres.mzzegxbisczmdpmorkbh:${password}@aws-0-ap-south-1.pooler.supabase.com:6543/postgres`;
+
 const pool = new Pool({
-  user: process.env.DB_USER || 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'ecommerce',
-  password: process.env.DB_PASSWORD || 'postgres',
-  port: process.env.DB_PORT || 5432,
+  connectionString,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 const setupDatabase = async () => {
@@ -23,7 +25,7 @@ const setupDatabase = async () => {
       CREATE TABLE orders (
         id SERIAL PRIMARY KEY,
         orderdescription VARCHAR(100) NOT NULL,
-        createdat TIMESTAMP NOT NULL
+        createdat TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `);
     console.log('Created orders table');
@@ -44,8 +46,8 @@ const setupDatabase = async () => {
         id SERIAL PRIMARY KEY,
         orderid INT NOT NULL,
         productid INT NOT NULL,
-        FOREIGN KEY (orderid) REFERENCES orders(id),
-        FOREIGN KEY (productid) REFERENCES products(id)
+        FOREIGN KEY (orderid) REFERENCES orders(id) ON DELETE CASCADE,
+        FOREIGN KEY (productid) REFERENCES products(id) ON DELETE CASCADE
       )
     `);
     console.log('Created OrderProductMap table');
